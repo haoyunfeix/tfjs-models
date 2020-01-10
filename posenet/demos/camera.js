@@ -18,6 +18,8 @@ import * as posenet from '@tensorflow-models/posenet';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
+import * as tf from '@tensorflow/tfjs';
+import * as tfwebgpu from '../../../tfjs/tfjs-backend-webgpu/src/index.ts';
 import {drawBoundingBox, drawKeypoints, drawSkeleton, isMobile, toggleLoadingUI, tryResNetButtonName, tryResNetButtonText, updateTryResNetButtonDatGuiCss} from './demo_util';
 
 const videoWidth = 600;
@@ -76,10 +78,14 @@ const defaultResNetInputResolution = 250;
 const guiState = {
   algorithm: 'multi-pose',
   input: {
-    architecture: 'MobileNetV1',
-    outputStride: defaultMobileNetStride,
-    inputResolution: defaultMobileNetInputResolution,
-    multiplier: defaultMobileNetMultiplier,
+    //architecture: 'MobileNetV1',
+    //outputStride: defaultMobileNetStride,
+    //inputResolution: defaultMobileNetInputResolution,
+    //multiplier: defaultMobileNetMultiplier,
+    architecture: 'ResNet50',
+    outputStride: defaultResNetStride,
+    inputResolution: defaultResNetInputResolution,
+    multiplier: defaultResNetMultiplier,
     quantBytes: defaultQuantBytes
   },
   singlePoseDetection: {
@@ -396,13 +402,17 @@ function detectPoseInRealTime(video, net) {
         minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
         break;
       case 'multi-pose':
-        let all_poses = await guiState.net.estimatePoses(video, {
+        const input = tf.randomUniform([500,600,3], 0, 255, 'int32');
+        let a = performance.now();
+        let all_poses = await guiState.net.estimatePoses(input, {
           flipHorizontal: flipPoseHorizontal,
           decodingMethod: 'multi-person',
           maxDetections: guiState.multiPoseDetection.maxPoseDetections,
           scoreThreshold: guiState.multiPoseDetection.minPartConfidence,
           nmsRadius: guiState.multiPoseDetection.nmsRadius
         });
+        console.log(performance.now()-a);
+        input.dispose();
 
         poses = poses.concat(all_poses);
         minPoseConfidence = +guiState.multiPoseDetection.minPoseConfidence;
@@ -452,6 +462,7 @@ function detectPoseInRealTime(video, net) {
  */
 export async function bindPage() {
   toggleLoadingUI(true);
+  await tf.ready();
   const net = await posenet.load({
     architecture: guiState.input.architecture,
     outputStride: guiState.input.outputStride,
