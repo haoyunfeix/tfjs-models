@@ -16,6 +16,9 @@
  */
 
 import * as qna from '@tensorflow-models/qna';
+import * as tf from '@tensorflow/tfjs-core';
+import * as tfcpu from '../../../tfjs/tfjs-backend-cpu/src/index';
+import * as tfwebgpu from '../../../tfjs/tfjs-backend-webgpu/src/index';
 
 let modelPromise = {};
 let search;
@@ -24,6 +27,8 @@ let contextDiv;
 let answerDiv;
 
 const process = async () => {
+  await tf.ready();
+  modelPromise = qna.load();
   const model = await modelPromise;
   const answers = await model.findAnswers(input.value, contextDiv.value);
   console.log(answers);
@@ -33,7 +38,7 @@ const process = async () => {
 };
 
 window.onload = () => {
-  modelPromise = qna.load();
+  //modelPromise = qna.load({modelUrl: 'https://storage.googleapis.com/tfjs-testing/mobile-bert/model.json'});
   input = document.getElementById('question');
   search = document.getElementById('search');
   contextDiv = document.getElementById('context');
