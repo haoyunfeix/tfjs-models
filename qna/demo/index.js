@@ -15,6 +15,10 @@
  * =============================================================================
  */
 
+import * as tf from '@tensorflow/tfjs-core';
+import * as tfwebgl from '@tensorflow/tfjs-backend-webgl';
+import * as tfcpu from '@tensorflow/tfjs-backend-cpu';
+import * as tfwebgpu from '@tensorflow/tfjs-backend-webgpu';
 import * as qna from '@tensorflow-models/qna';
 
 let modelPromise = {};
@@ -24,8 +28,15 @@ let contextDiv;
 let answerDiv;
 
 const process = async () => {
+  await tf.ready();
+  modelPromise = qna.load();
   const model = await modelPromise;
+  const start = performance.now();
   const answers = await model.findAnswers(input.value, contextDiv.value);
+  const end = performance.now();
+  console.log(end - start);
+  const webgpuBackend = tf.findBackend("webgpu");
+  webgpuBackend.getResult();
   console.log(answers);
   answerDiv.innerHTML =
       answers.map(answer => answer.text + ' (score =' + answer.score + ')')
@@ -33,12 +44,11 @@ const process = async () => {
 };
 
 window.onload = () => {
-  modelPromise = qna.load();
   input = document.getElementById('question');
   search = document.getElementById('search');
   contextDiv = document.getElementById('context');
   answerDiv = document.getElementById('answer');
-  search.onclick = process;
+  search.onclick = process; 
 
   input.addEventListener('keyup', async (event) => {
     if (event.key === 'Enter') {
