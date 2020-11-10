@@ -174,6 +174,7 @@ class MobileBertImpl implements MobileBert {
    * @return array of answers
    */
   async findAnswers(question: string, context: string): Promise<Answer[]> {
+    const rs = [];
     if (question == null || context == null) {
       throw new Error(
           'The input to findAnswers call is null, ' +
@@ -182,37 +183,89 @@ class MobileBertImpl implements MobileBert {
 
     const features =
         this.process(question, context, MAX_QUERY_LEN, MAX_SEQ_LEN);
-    const promises = features.map(async (feature, index) => {
-      const result = tf.tidy(() => {
-        const batchSize = 1;
-        const inputIds =
-            tf.tensor2d(feature.inputIds, [batchSize, INPUT_SIZE], 'int32');
-        const segmentIds =
-            tf.tensor2d(feature.segmentIds, [batchSize, INPUT_SIZE], 'int32');
-        const inputMask =
-            tf.tensor2d(feature.inputMask, [batchSize, INPUT_SIZE], 'int32');
-        const globalStep = tf.scalar(index, 'int32');
-        return this.model.execute(
-            {
-              input_ids: inputIds,
-              segment_ids: segmentIds,
-              input_mask: inputMask,
-              global_step: globalStep
-            },
-            ['start_logits', 'end_logits']);
-      });
-      const logits = await Promise.all([result[0].array(), result[1].array()]);
+    async function fn(feature, index, that) {
+        const thisa:any = that;
+        let start = 0;
+        start = performance.now();
+        const result = tf.tidy(() => {
+          const batchSize = 1;
+          const inputIds =
+              tf.tensor2d(feature.inputIds, [batchSize, INPUT_SIZE], 'int32');
+          const segmentIds =
+              tf.tensor2d(feature.segmentIds, [batchSize, INPUT_SIZE], 'int32');
+          const inputMask =
+              tf.tensor2d(feature.inputMask, [batchSize, INPUT_SIZE], 'int32');
+          const globalStep = tf.scalar(index, 'int32');
+          //return this.model.execute(
+          const a = thisa.model.execute(
+              {
+                input_ids: inputIds,
+                segment_ids: segmentIds,
+                input_mask: inputMask,
+                global_step: globalStep
+              },
+              ['start_logits', 'end_logits']);
+          return a;
+        });
+        const logits = await Promise.all([result[0].array(), result[1].array()]);
+          const end = performance.now();
+          rs.push(end - start);
+  
+        // dispose all intermediate tensors
+        result[0].dispose();
+        result[1].dispose();
+  
+        return thisa.getBestAnswers(
+            logits[0][0], logits[1][0], feature.origTokens,
+            feature.tokenToOrigMap, index);
+      
 
-      // dispose all intermediate tensors
-      result[0].dispose();
-      result[1].dispose();
+    }
+    const answers= [];
+    for (let i=0;i<features.length;i++) {
+      answers.push(await fn(features[i], i, this));
+    }
+    //const promises = features.map(async (feature, index) => {
+    //  let start = 0;
+    //  start = performance.now();
+    //  const result = tf.tidy(() => {
+    //    const batchSize = 1;
+    //    const inputIds =
+    //        tf.tensor2d(feature.inputIds, [batchSize, INPUT_SIZE], 'int32');
+    //    const segmentIds =
+    //        tf.tensor2d(feature.segmentIds, [batchSize, INPUT_SIZE], 'int32');
+    //    const inputMask =
+    //        tf.tensor2d(feature.inputMask, [batchSize, INPUT_SIZE], 'int32');
+    //    const globalStep = tf.scalar(index, 'int32');
+    //    //return this.model.execute(
+    //    console.log(start);
+    //    const a = this.model.execute(
+    //        {
+    //          input_ids: inputIds,
+    //          segment_ids: segmentIds,
+    //          input_mask: inputMask,
+    //          global_step: globalStep
+    //        },
+    //        ['start_logits', 'end_logits']);
+    //    return a;
+    //  });
+    //  const logits = await Promise.all([result[0].array(), result[1].array()]);
+    //    const end = performance.now();
+    //    console.log(end);
+    //    rs.push(end - start);
 
-      return this.getBestAnswers(
-          logits[0][0], logits[1][0], feature.origTokens,
-          feature.tokenToOrigMap, index);
-    });
+    //  // dispose all intermediate tensors
+    //  result[0].dispose();
+    //  result[1].dispose();
 
-    const answers = await Promise.all(promises);
+    //  return this.getBestAnswers(
+    //      logits[0][0], logits[1][0], feature.origTokens,
+    //      feature.tokenToOrigMap, index);
+    //});
+
+    //const answers = await Promise.all(promises);
+    console.log(rs);
+    console.log(rs.reduce((a,b)=>a+b)/rs.length);
     return answers.reduce((flatten, array) => flatten.concat(array), [])
         .sort((logitA, logitB) => logitB.score - logitA.score)
         .slice(0, PREDICT_ANSWER_NUM);
