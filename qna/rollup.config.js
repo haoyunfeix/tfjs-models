@@ -56,6 +56,7 @@ function config({plugins = [], output = {}}) {
       node(), ...plugins
     ],
     output: {
+      sourcemap: true,
       banner: PREAMBLE,
       globals: {
         '@tensorflow/tfjs-core': 'tf',

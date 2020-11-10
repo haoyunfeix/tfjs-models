@@ -155,12 +155,14 @@ class MobileBertImpl implements MobileBert {
     const inputIds = tf.ones([batchSize, INPUT_SIZE], 'int32');
     const segmentIds = tf.ones([1, INPUT_SIZE], 'int32');
     const inputMask = tf.ones([1, INPUT_SIZE], 'int32');
-    this.model.execute({
-      input_ids: inputIds,
-      segment_ids: segmentIds,
-      input_mask: inputMask,
-      global_step: tf.scalar(1, 'int32')
-    });
+    for (let i = 0; i < 4; i++) {
+      this.model.execute({
+        input_ids: inputIds,
+        segment_ids: segmentIds,
+        input_mask: inputMask,
+        global_step: tf.scalar(1, 'int32')
+      });
+    }
 
     this.tokenizer = await loadTokenizer();
   }
