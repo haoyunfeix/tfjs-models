@@ -11,6 +11,7 @@
   "dependencies": {
     "@tensorflow-models/posenet": "file:../dist",
     "@tensorflow/tfjs-backend-webgl": "^3.3.0",
+    "@tensorflow/tfjs-backend-webgpu": "^3.3.0",
     "@tensorflow/tfjs-converter": "^3.3.0",
     "@tensorflow/tfjs-core": "^3.3.0",
     "stats.js": "^0.17.0"
@@ -21,6 +22,7 @@
     "build-camera": "cross-env NODE_ENV=production parcel build camera.html --public-url ./",
     "lint": "eslint .",
     "link-local": "yalc link",
+    "link-webgpu": "yalc link @tensorflow/tfjs-backend-webgpu",
     "build-dep": "cd ../ && yarn && yarn build"
   },
   "browser": {
