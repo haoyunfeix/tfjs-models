@@ -14,7 +14,9 @@
  * limitations under the License.
  * =============================================================================
  */
+import * as tf from '@tensorflow/tfjs-core';
 import '@tensorflow/tfjs-backend-webgl';
+import '@tensorflow/tfjs-backend-webgpu';
 
 import * as posenet from '@tensorflow-models/posenet';
 import dat from 'dat.gui';
@@ -35,21 +37,30 @@ async function setupCamera() {
     throw new Error(
         'Browser API navigator.mediaDevices.getUserMedia not available');
   }
+  const file = '../../../../model/test.mp4';
 
   const video = document.getElementById('video');
   video.width = videoWidth;
   video.height = videoHeight;
 
-  const mobile = isMobile();
-  const stream = await navigator.mediaDevices.getUserMedia({
-    'audio': false,
-    'video': {
-      facingMode: 'user',
-      width: mobile ? undefined : videoWidth,
-      height: mobile ? undefined : videoHeight,
-    },
-  });
-  video.srcObject = stream;
+  const source = document.createElement('source');
+  source.src = file;
+  source.type = 'video/mp4';
+  video.muted = 'muted';
+  video.loop = true;
+  video.appendChild(source);
+  //video.load();
+
+  //const mobile = isMobile();
+  //const stream = await navigator.mediaDevices.getUserMedia({
+  //  'audio': false,
+  //  'video': {
+  //    facingMode: 'user',
+  //    width: mobile ? undefined : videoWidth,
+  //    height: mobile ? undefined : videoHeight,
+  //  },
+  //});
+  //video.srcObject = stream;
 
   return new Promise((resolve) => {
     video.onloadedmetadata = () => {
@@ -101,6 +112,7 @@ const guiState = {
     showBoundingBox: false,
   },
   net: null,
+  environment: 'webgl',
 };
 
 /**
@@ -255,6 +267,11 @@ function setupGui(cameras, net) {
   output.add(guiState.output, 'showPoints');
   output.add(guiState.output, 'showBoundingBox');
   output.open();
+  let backendsController = null;
+  backendsController = gui.add(guiState, 'environment', ['webgl', 'webgpu']);
+  backendsController.onChange(async backend => {
+    await tf.setBackend(backend);
+  });
 
 
   architectureController.onChange(function(architecture) {
@@ -387,9 +404,17 @@ function detectPoseInRealTime(video, net) {
     let poses = [];
     let minPoseConfidence;
     let minPartConfidence;
+    let input;
+    if (guiState.environment === 'webgpu') {
+      //input = await createImageBitmap(video, {premultiplyAlpha: 'none'});
+      input = video;
+    } else {
+      //input = await createImageBitmap(video, {premultiplyAlpha: 'none'});
+      input = video;
+    }
     switch (guiState.algorithm) {
       case 'single-pose':
-        const pose = await guiState.net.estimatePoses(video, {
+        const pose = await guiState.net.estimatePoses(input, {
           flipHorizontal: flipPoseHorizontal,
           decodingMethod: 'single-person'
         });
@@ -398,7 +423,7 @@ function detectPoseInRealTime(video, net) {
         minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
         break;
       case 'multi-pose':
-        let all_poses = await guiState.net.estimatePoses(video, {
+        let all_poses = await guiState.net.estimatePoses(input, {
           flipHorizontal: flipPoseHorizontal,
           decodingMethod: 'multi-person',
           maxDetections: guiState.multiPoseDetection.maxPoseDetections,
@@ -454,6 +479,7 @@ function detectPoseInRealTime(video, net) {
  */
 export async function bindPage() {
   toggleLoadingUI(true);
+  await tf.ready();
   const net = await posenet.load({
     architecture: guiState.input.architecture,
     outputStride: guiState.input.outputStride,
