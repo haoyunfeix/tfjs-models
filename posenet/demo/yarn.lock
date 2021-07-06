@@ -982,6 +982,14 @@
     "@types/seedrandom" "2.4.27"
     seedrandom "2.4.3"
 
+"@tensorflow/tfjs-backend-cpu@3.7.0":
+  version "3.7.0"
+  resolved "https://registry.nlark.com/@tensorflow/tfjs-backend-cpu/download/@tensorflow/tfjs-backend-cpu-3.7.0.tgz#146ad00a8fffdf4794f9b1a0bfc080cddba96836"
+  integrity sha1-FGrQCo//30eU+bGgv8CAzdupaDY=
+  dependencies:
+    "@types/seedrandom" "2.4.27"
+    seedrandom "2.4.3"
+
 "@tensorflow/tfjs-backend-webgl@^3.3.0":
   version "3.6.0"
   resolved "https://registry.npmjs.org/@tensorflow/tfjs-backend-webgl/-/tfjs-backend-webgl-3.6.0.tgz#1ea1a73abea8d6324fd81aedf7f187ab6eb73692"
@@ -993,6 +1001,15 @@
     "@types/webgl-ext" "0.0.30"
     "@types/webgl2" "0.0.5"
     seedrandom "2.4.3"
+
+"@tensorflow/tfjs-backend-webgpu@^0.0.1-alpha.7":
+  version "0.0.1-alpha.7"
+  resolved "https://registry.nlark.com/@tensorflow/tfjs-backend-webgpu/download/@tensorflow/tfjs-backend-webgpu-0.0.1-alpha.7.tgz#3a8c4f8afad5828d15cd8bba692086d97d737bb1"
+  integrity sha1-OoxPivrVgo0VzYu6aSCG2X1ze7E=
+  dependencies:
+    "@tensorflow/tfjs-backend-cpu" "3.7.0"
+    "@webgpu/glslang" "0.0.12"
+    "@webgpu/types" "0.1.3"
 
 "@tensorflow/tfjs-converter@^3.3.0":
   version "3.6.0"
@@ -1034,6 +1051,16 @@
   version "0.0.5"
   resolved "https://registry.npmjs.org/@types/webgl2/-/webgl2-0.0.5.tgz#dd925e20ab8ace80eb4b1e46fda5b109c508fb0d"
   integrity sha512-oGaKsBbxQOY5+aJFV3KECDhGaXt+yZJt2y/OZsnQGLRkH6Fvr7rv4pCt3SRH1somIHfej/c4u7NSpCyd9x+1Ow==
+
+"@webgpu/glslang@0.0.12":
+  version "0.0.12"
+  resolved "https://registry.npm.taobao.org/@webgpu/glslang/download/@webgpu/glslang-0.0.12.tgz#ee40e8d38c31436508147feaf0f646fde9bb4da6"
+  integrity sha1-7kDo04wxQ2UIFH/q8PZG/em7TaY=
+
+"@webgpu/types@0.1.3":
+  version "0.1.3"
+  resolved "https://registry.nlark.com/@webgpu/types/download/@webgpu/types-0.1.3.tgz#0c223b06e81713ae011fc8986921725a1685d967"
+  integrity sha1-DCI7BugXE64BH8iYaSFyWhaF2Wc=
 
 abab@^2.0.0:
   version "2.0.5"
